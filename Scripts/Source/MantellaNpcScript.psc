@@ -25,11 +25,11 @@ Event OnInit()
     
     while true
         Int i = 0
-        Int currentTime = utility.GetCurrentRealTime() as Int
-        if currentTime % 10 == 0
+        Int currentTime = GetCurrentTime()
+        if True
             Int npcCount = FindNpcCountInTheArea(Meter(20))
             
-            while i < npcCount / 2 && activeDialogCount < 1
+            while i < npcCount && activeDialogCount < 10
                 self.DebugTrace("Check. ActiveDialogueCount = " + activeDialogCount + ", NPC Count: " + npcCount)
 
                 actor source = self.FindAvailableActor(game.GetPlayer(), Meter(20))
@@ -42,19 +42,21 @@ Event OnInit()
                         MinDialogueDistance = 1.5
                     EndIf
 
+                    MinDialogueDistance = 20.0
+
                     actor target = self.FindTargetActorForDialogue(source, Meter(MinDialogueDistance))
                     if target != none
                         Int targetId = (target.getactorbase() as form).getformid()
                         Int dice = ThrowDice()
                         DebugTrace("Throwing dice: " + source.GetDisplayName() + " - " + target.GetDisplayName() + ": " + (dice as String))
-                        if  (dice == 1 || dice == 2)
+                        if  (dice == 1 || dice == 2 || dice == 3)
                             Int pairIndex = (lastPairIndex) % MAX_DIALOGUE_COUNT
 
                             self.DebugTrace("Initializing Dialogue(" + pairIndex + ") Between " + source.GetDisplayName() + " and " + target.getDisplayName())
 
                             sources[pairIndex] = sourceId
                             targets[pairIndex] = targetId
-                            initTimes[pairIndex] = utility.GetCurrentRealTime() as Int
+                            initTimes[pairIndex] = GetCurrentTime()
 
                             miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + pairIndex + ".txt", sourceId as String, false, false)
                             miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + pairIndex + ".txt", targetId as String, false, false)
@@ -106,13 +108,12 @@ Event OnInit()
 EndEvent
 
 Function Init()
+    InitArray(sources, 0)
+    InitArray(targets, 0)
     InitArray(initTimes, -1)
 
     Int i = 0
     while i < MAX_DIALOGUE_COUNT
-        sources[i] = 0
-        targets[i] = 0
-        initTimes[i] = -1
         
         miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
         miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
@@ -203,7 +204,7 @@ bool function IsHuman(Actor _actor)
 endFunction
 
 function ClearSourceTargetArrays()
-    Int currentTime = utility.GetCurrentRealTime() as Int
+    Int currentTime = GetCurrentTime()
     Int i = 0
     while i < MAX_DIALOGUE_COUNT
         if(initTimes[i] != -1 && currentTime - initTimes[i] > MAX_DIALOGUE_TIMEOUT)
@@ -230,6 +231,12 @@ function ClearSourceTargetArrays()
     endWhile
 endFunction
 
+Int Function GetCurrentTime()
+    Float currentGameTime = Utility.GetCurrentGameTime()
+
+    Return ((currentGameTime * 10000) as Int)
+EndFunction
+
 function InitArray(Int[] arr, Int val)
     Int i = 0
     While i < arr.Length
@@ -250,9 +257,9 @@ Bool function CheckInArray(Int[] array, Int value)
 endFunction
 
 function DebugTrace(String text)
-    debug.Trace("MantellaNpc2Npc: " + text, 0)
+    debug.Trace("MantellaNpc: " + text, 0)
 endFunction
 
 function DebugMessageBox(String text)
-    debug.MessageBox("MantellaNpc2Npc: " + text)
+    debug.MessageBox("MantellaNpc: " + text)
 endFunction

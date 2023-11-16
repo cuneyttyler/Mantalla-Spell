@@ -1,4 +1,4 @@
-Scriptname MantellaNpcEffect extends activemagiceffect  
+Scriptname MantellaNpcEffectScript extends activemagiceffect  
 
 Topic property MantellaNpcSourceDialogueLine1 auto
 Topic property MantellaNpcTargetDialogueLine1 auto
@@ -93,6 +93,8 @@ event OnEffectStart(Actor target, Actor caster)
         sayLineTarget = MiscUtil.ReadFromFile("mantella\\" + "_mantella_say_line_target_" + dialogueIndex + ".txt") as String
         
         if sayLineSource == "True"
+            Utility.Wait(0.5) ; Wait for audio file to be registered
+            
             DebugTrace("Saying line " + caster.GetDisplayName())
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String
@@ -105,6 +107,8 @@ event OnEffectStart(Actor target, Actor caster)
         endIf
 
         if sayLineTarget == "True"
+            Utility.Wait(0.5) ; Wait for audio file to be registered
+
             DebugTrace("Saying line " + target.GetDisplayName())
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String

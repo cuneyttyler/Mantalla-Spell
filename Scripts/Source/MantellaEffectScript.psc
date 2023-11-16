@@ -94,6 +94,10 @@ event OnEffectStart(Actor target, Actor caster)
 
             sayLine = MiscUtil.ReadFromFile("mantella/_mantella_say_line.txt") as String
             if sayLine == "True"
+                Utility.Wait(0.5)
+                
+                Debug.Trace("Mantella: Target saying line.")
+
                 subtitle = MiscUtil.ReadFromFile("mantella/_mantella_subtitle.txt") as String
                 
                 MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(target, MantellaDialogueLine, subtitle)
