@@ -12,7 +12,7 @@ event OnEffectStart(Actor target, Actor caster)
 	Utility.Wait(0.5)
 	MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "False",  append=false)
     
-    MiscUtil.WriteToFile("_mantella_skyrim_folder.txt", "Set the folder this file is in as your skyrim_folder path in MantellaSoftware/config.ini", append=false)
+    MiscUtil.WriteToFile("_mantella__skyrim_folder.txt", "Set the folder this file is in as your skyrim_folder path in MantellaSoftware/config.ini", append=false)
 	; only run script if actor is not already selected
 	String currentActor = MiscUtil.ReadFromFile("mantella/_mantella_current_actor.txt") as String
 
@@ -96,8 +96,6 @@ event OnEffectStart(Actor target, Actor caster)
             if sayLine == "True"
                 Utility.Wait(0.5)
                 
-                Debug.Trace("Mantella: Target saying line.")
-
                 subtitle = MiscUtil.ReadFromFile("mantella/_mantella_subtitle.txt") as String
                 
                 MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(target, MantellaDialogueLine, subtitle)
@@ -162,9 +160,17 @@ event OnEffectStart(Actor target, Actor caster)
     else
         MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
     endIf
+    Reset()
 	Debug.Notification("Conversation ended.")
 endEvent
 
+function Reset()
+    MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_current_actor.txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_current_actor_id.txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_thinking.txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_listening.txt", "",  append=false)
+endFunction
 
 int function GetCurrentHourOfDay()
 	float Time = Utility.GetCurrentGameTime()

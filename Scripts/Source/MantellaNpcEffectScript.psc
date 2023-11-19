@@ -42,21 +42,30 @@ ReferenceAlias property TargetRef9 auto
 ReferenceAlias property SourceRef10 auto
 ReferenceAlias property TargetRef10 auto
 
+; Package Property MantellaListenAndFollow1 auto
+; Package Property MantellaListenAndFollow2 auto
+; Package Property MantellaListenAndFollow3 auto
+; Package Property MantellaListenAndFollow4 auto
+; Package Property MantellaListenAndFollow5 auto
+; Package Property MantellaListenAndFollow6 auto
+; Package Property MantellaListenAndFollow7 auto
+; Package Property MantellaListenAndFollow8 auto
+; Package Property MantellaListenAndFollow9 auto
+; Package Property MantellaListenAndFollow10 auto
+
 Topic MantellaNpcSourceDialogueLine
 Topic MantellaNpcTargetDialogueLine
 
 ReferenceAlias SourceRef
 ReferenceAlias TargetRef
 
+; Package MantellaListenAndFollow
+
 Int MAX_DIALOGUE_COUNT = 10
 
 event OnEffectStart(Actor target, Actor caster)
-    ; these three lines below is to ensure that no leftover Mantella effects are running
-    MiscUtil.WriteToFile("mantella\\" + "_mantella_end_conversation.txt", "True",  append=false)
-    Utility.Wait(0.5)
-    MiscUtil.WriteToFile("mantella\\" + "_mantella_end_conversation.txt", "False",  append=false)
-    
-    MiscUtil.WriteToFile("_mantella_skyrim_folder.txt", "Set the folder this file is in as your skyrim_folder path in MantellaSoftware/config.ini", append=false)
+    DebugTrace("Initialized for " + caster.GetDisplayName() + " and " + target.GetDisplayName())
+    MiscUtil.WriteToFile("_mantella__skyrim_folder.txt", "Set the folder this file is in as your skyrim_folder path in MantellaSoftware/config.ini", append=false)
     
     Utility.Wait(0.5)
 
@@ -65,8 +74,16 @@ event OnEffectStart(Actor target, Actor caster)
     
     Init(dialogueIndex)
 
+    ; these three lines below is to ensure that no leftover Mantella effects are running
+    MiscUtil.WriteToFile("mantella\\" + "_mantella_end_conversation_" + dialogueIndex + ".txt", "True",  append=false)
+    Utility.Wait(0.5)
+    MiscUtil.WriteToFile("mantella\\" + "_mantella_end_conversation_" + dialogueIndex + ".txt", "False",  append=false)
+    
     SourceRef.ForceRefTo(caster)
     TargetRef.ForceRefTo(target)
+
+    ; AddFollowPackage(target)
+    ; DebugTrace("Follow package added to " + TargetRef.GetActorRef().GetDisplayName())
 
     int Time
     Time = GetCurrentHourOfDay()
@@ -95,11 +112,11 @@ event OnEffectStart(Actor target, Actor caster)
         if sayLineSource == "True"
             Utility.Wait(0.5) ; Wait for audio file to be registered
             
-            DebugTrace("Saying line " + caster.GetDisplayName())
+            DebugTrace("Saying line " + caster.GetDisplayName() + "(" + dialogueIndex + ")")
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String
             
-            ; MantellaNpcSubtitles.SetInjectTopicAndSubtitleForSpeaker(caster, MantellaNpcSourceDialogueLine, subtitle)
+            MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(caster, MantellaNpcSourceDialogueLine, subtitle)
             caster.Say(MantellaNpcSourceDialogueLine, abSpeakInPlayersHead=false)
 
             ; Set sayLine back to False once the voiceline has been triggered
@@ -109,11 +126,11 @@ event OnEffectStart(Actor target, Actor caster)
         if sayLineTarget == "True"
             Utility.Wait(0.5) ; Wait for audio file to be registered
 
-            DebugTrace("Saying line " + target.GetDisplayName())
+            DebugTrace("Saying line " + target.GetDisplayName() + "(" + dialogueIndex + ")")
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String
             
-            ; MantellaNpcSubtitles.SetInjectTopicAndSubtitleForSpeaker(target, MantellaNpcTargetDialogueLine, subtitle)
+            MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(target, MantellaNpcTargetDialogueLine, subtitle)
             target.Say(MantellaNpcTargetDialogueLine, abSpeakInPlayersHead=false)
 
             ; Set sayLine back to False once the voiceline has been triggered
@@ -137,7 +154,17 @@ event OnEffectStart(Actor target, Actor caster)
         ; Wait for Python / the script to give the green light to end the conversation
         sayFinalLine = MiscUtil.ReadFromFile("mantella\\" + "_mantella_end_conversation_" + dialogueIndex + ".txt") as String
     endWhile
+
+    ; RemoveFollowPackage(target)
 endEvent
+
+Function AddFollowPackage(Actor source)
+    ; ActorUtil.AddPackageOverride(source, MantellaListenAndFollow1)
+EndFunction
+
+Function RemoveFollowPackage(Actor _actor)
+    ; ActorUtil.RemovePackageOverride(_actor, MantellaListenAndFollow)
+EndFunction
 
 Function Init(Int dialogueIndex)
     If dialogueIndex == 0
@@ -145,60 +172,70 @@ Function Init(Int dialogueIndex)
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine1
         SourceRef = SourceRef1
         TargetRef = TargetRef1
+        ; MantellaListenAndFollow = MantellaListenAndFollow1
     EndIf
     If dialogueIndex == 1
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine2
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine2
         SourceRef = SourceRef2
         TargetRef = TargetRef2
+        ; MantellaListenAndFollow = MantellaListenAndFollow2
     EndIf
     If dialogueIndex == 2
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine3
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine3
         SourceRef = SourceRef3
         TargetRef = TargetRef3
+        ; MantellaListenAndFollow = MantellaListenAndFollow3
     EndIf
     If dialogueIndex == 3
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine4
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine4
         SourceRef = SourceRef4
         TargetRef = TargetRef4
+        ; MantellaListenAndFollow = MantellaListenAndFollow4
     EndIf
     If dialogueIndex == 4
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine5
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine5
         SourceRef = SourceRef5
         TargetRef = TargetRef5
+        ; MantellaListenAndFollow = MantellaListenAndFollow5
     EndIf
     If dialogueIndex == 5
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine6
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine6
         SourceRef = SourceRef6
         TargetRef = TargetRef6
+        ; MantellaListenAndFollow = MantellaListenAndFollow6
     EndIf
     If dialogueIndex == 6
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine7
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine7
         SourceRef = SourceRef7
         TargetRef = TargetRef7
+        ; MantellaListenAndFollow = MantellaListenAndFollow7
     EndIf
     If dialogueIndex == 7
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine8
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine8
         SourceRef = SourceRef8
         TargetRef = TargetRef8
+        ; MantellaListenAndFollow = MantellaListenAndFollow8
     EndIf
     If dialogueIndex == 8
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine9
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine9
         SourceRef = SourceRef9
         TargetRef = TargetRef9
+        ; MantellaListenAndFollow = MantellaListenAndFollow9
     EndIf
     If dialogueIndex == 9
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine10
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine10
         SourceRef = SourceRef10
         TargetRef = TargetRef10
+        ; MantellaListenAndFollow = MantellaListenAndFollow10
     EndIf
 EndFunction
 
@@ -234,9 +271,9 @@ function SplitSubtitleIntoParts(String subtitle)
 endFunction
 
 function DebugTrace(String text)
-    debug.Trace("MantellaNpc:MagicEffect: " + text, 0)
+    debug.Trace("Mantella:MagicEffect: " + text, 0)
 endFunction
 
 function DebugMessageBox(String text)
-    debug.MessageBox("MantellaNpc:MagicEffect: " + text)
+    debug.MessageBox("Mantella:MagicEffect: " + text)
 endFunction

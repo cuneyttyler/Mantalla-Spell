@@ -1,59 +1,93 @@
 Scriptname MantellaNpcScript extends Quest  
 
-spell property MantellaNpcSpell auto
+Spell Property MantellaNpcSpell auto
+MantellaMCM Property mcm auto
+
+String engageProbability = "Medium"
 Float MeterUnits = 71.0210
-Int MAX_DIALOGUE_COUNT = 10
-Int MAX_DIALOGUE_TIMEOUT = 300
-Int lastPairIndex = 0
+
+Actor[] sourceActors
+Actor[] targetActors
 Int[] sources
 Int[] targets
 Int[] initTimes
-Int activeDialogCount = 0
-Float MinDialogueDistance
 
-Float function Meter(Float Meter)
-    return Meter * MeterUnits
-endFunction
+Int lastPairIndex = 0
+Int activeDialogCount = 0
+Float MaxDialogueDistance
+
+String[] HUMAN_RACES
+String[] VAMPIRE_RACES
+
+; Package Property MantellaListenAndFollow1 auto
+
+Float Function Meter(Float Meter)
+    Return Meter * MeterUnits
+EndFunction
 
 Event OnInit()
     self.DebugTrace("Initialized")
-    sources = new Int[10]
-    targets = new Int[10]
-    initTimes = new Int[10]
+    sourceActors = new Actor[20]
+    targetActors = new Actor[20]
+    sources = new Int[20]
+    targets = new Int[20]
+    initTimes = new Int[20]
+    HUMAN_RACES = new String[10]
+    VAMPIRE_RACES = new String[10]
 
     Init()
     
-    while true
+    While true
         Int i = 0
         Int currentTime = GetCurrentTime()
-        if True
-            Int npcCount = FindNpcCountInTheArea(Meter(20))
+        If True
+            Int npcCount = FindNpcCountInTheArea(Meter(mcm.GET_MANTELLA_MAX_RADIUS()))
             
-            while i < npcCount && activeDialogCount < 10
-                self.DebugTrace("Check. ActiveDialogueCount = " + activeDialogCount + ", NPC Count: " + npcCount)
+            While i < npcCount && activeDialogCount < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+                DebugTrace("Check. ActiveDialogueCount = " + activeDialogCount + ", NPC Count: " + npcCount)
 
-                actor source = self.FindAvailableActor(game.GetPlayer(), Meter(20))
-                if source != none
+                ; DebugTrace("==== MCM VALUES ====")
+                ; DebugTrace("MANTELLA_MAX_DIALOGUE_COUNT: " + mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT())
+                ; DebugTrace("MANTELLA_MAX_DIALOGUE_TIMEOUT: " + mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT())
+                ; DebugTrace("MANTELLA_MAX_RADIUS: " + mcm.GET_MANTELLA_MAX_RADIUS())
+                ; DebugTrace("MANTELLA_MAX_DISTANCE: " + mcm.GET_MANTELLA_MAX_DISTANCE())
+                ; DebugTrace("MANTELLA_SELECTED_FREQUENCY: " + mcm.GET_MANTELLA_SELECTED_FREQUENCY())
+                ; DebugTrace("====================")
+
+                actor source = self.FindAvailableActor(game.GetPlayer(), Meter(mcm.GET_MANTELLA_MAX_RADIUS()))
+                If source != none
                     Int sourceId = (source.getactorbase() as form).getformid()
 
                     If npcCount <= 3
-                        MinDialogueDistance = 7.0
+                        MaxDialogueDistance = mcm.GET_MANTELLA_MAX_DISTANCE() * 3
                     Else
-                        MinDialogueDistance = 1.5
+                        MaxDialogueDistance = mcm.GET_MANTELLA_MAX_DISTANCE()
                     EndIf
 
-                    MinDialogueDistance = 20.0
-
-                    actor target = self.FindTargetActorForDialogue(source, Meter(MinDialogueDistance))
-                    if target != none
+                    actor target = self.FindTargetActorForDialogue(source, Meter(MaxDialogueDistance))
+                    If target != none
                         Int targetId = (target.getactorbase() as form).getformid()
                         Int dice = ThrowDice()
                         DebugTrace("Throwing dice: " + source.GetDisplayName() + " - " + target.GetDisplayName() + ": " + (dice as String))
-                        if  (dice == 1 || dice == 2 || dice == 3)
-                            Int pairIndex = (lastPairIndex) % MAX_DIALOGUE_COUNT
+
+                        Bool condition = False
+                        If mcm.GET_MANTELLA_SELECTED_FREQUENCY() == 0
+                            condition = dice == 1
+                        EndIf
+                        If mcm.GET_MANTELLA_SELECTED_FREQUENCY() == 1
+                            condition = dice <= 3
+                        EndIf
+                        If mcm.GET_MANTELLA_SELECTED_FREQUENCY() == 2
+                            condition = dice <= 6
+                        EndIf
+                        If  condition
+                            Int pairIndex = (lastPairIndex) % mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
 
                             self.DebugTrace("Initializing Dialogue(" + pairIndex + ") Between " + source.GetDisplayName() + " and " + target.getDisplayName())
+                            ; Debug.Notification("Initializing Dialogue(" + pairIndex + ") Between " + source.GetDisplayName() + " and " + target.getDisplayName())
 
+                            sourceActors[pairIndex] = source
+                            targetActors[pairIndex] = target
                             sources[pairIndex] = sourceId
                             targets[pairIndex] = targetId
                             initTimes[pairIndex] = GetCurrentTime()
@@ -87,33 +121,37 @@ Event OnInit()
                             MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + pairIndex + ".txt", "False", append=false)
 
                             String currLoc = (source.GetCurrentLocation() as form).getname()
-                            if currLoc == ""
+                            If currLoc == ""
                                 currLoc = "Skyrim"
-                            endIf
+                            EndIf
 
                             MiscUtil.WriteToFile("mantella\\_mantella_current_location.txt", currLoc, append=false)
-
+                                                        
                             lastPairIndex += 1
                             activeDialogCount += 1
-                            source.AddSpell(MantellaNpcSpell , true)
+                            source.AddSpell(MantellaNpcSpell, true)
                             MantellaNpcSpell .Cast(source as objectreference, target as objectreference)
-                        endIf
-                    endIf
-                endIf
+                            ; DebugTrace("Adding package to " + target.GetDisplayName())
+                            ; ActorUtil.RemovePackageOverride(target,MantellaListenAndFollow1)
+                            ; ActorUtil.AddPackageOverride(target,MantellaListenAndFollow1)
+                            ; DebugTrace("Follow package added to " + target.GetDisplayName())
+                        EndIf
+                    EndIf
+                EndIf
                 i += 1
-            endWhile
-        endIf
+            EndWhile
+        EndIf
         self.ClearSourceTargetArrays()
-    endWhile
+    EndWhile
 EndEvent
 
 Function Init()
     InitArray(sources, 0)
     InitArray(targets, 0)
     InitArray(initTimes, -1)
-
+    
     Int i = 0
-    while i < MAX_DIALOGUE_COUNT
+    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
         
         miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
         miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
@@ -130,84 +168,108 @@ Function Init()
         MiscUtil.WriteToFile("mantella\\_mantella_current_location.txt", "", append=false)
 
         i += 1
-    endWhile
+    EndWhile
+
+    HUMAN_RACES[0] = "ArgonianRace"
+    HUMAN_RACES[1] = "BretonRace"
+    HUMAN_RACES[2] = "DarkElfRace"
+    HUMAN_RACES[3] = "HighElfRace"
+    HUMAN_RACES[4] = "ImpreialRace"
+    HUMAN_RACES[5] = "KhajitRace"
+    HUMAN_RACES[6] = "NordRace"
+    HUMAN_RACES[7] = "OrcRace"
+    HUMAN_RACES[8] = "RedguardRace"
+    HUMAN_RACES[9] = "WoodElfRace"
+
+    VAMPIRE_RACES[0] = "ArgonianRaceVampire"
+    VAMPIRE_RACES[1] = "BretonRaceVampire"
+    VAMPIRE_RACES[2] = "DarkElfRaceVampire"
+    VAMPIRE_RACES[3] = "HighElfRaceVampire"
+    VAMPIRE_RACES[4] = "ImpreialRaceVampire"
+    VAMPIRE_RACES[5] = "KhajitRaceVampire"
+    VAMPIRE_RACES[6] = "NordRaceVampire"
+    VAMPIRE_RACES[7] = "OrcRaceVampire"
+    VAMPIRE_RACES[8] = "RedguardRaceVampire"
+    VAMPIRE_RACES[9] = "WoodElfRaceVampire"
 EndFunction
 
 Int Function ThrowDice()
     Return Utility.RandomInt(1,6)
 EndFunction
 
-Int function FindNpcCountInTheArea(Float distance)
+Int Function FindNpcCountInTheArea(Float distance)
     Int[] ids = new Int[50]
     Actor center = Game.GetPlayer()
     Int count = 0
     Int i = 0
-    while i < 50
+    While i < 50
         Actor resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
         Int id = (resultActor.getactorbase() as form).getformid()
-
-        if resultActor != center && IsHuman(resultActor) && !CheckInArray(ids, id)
+        If resultActor != center && (IsHuman(resultActor) || IsVampire(resultActor) || IsDragon(resultActor)) && !CheckInArray(ids, id)
             ids[count] = id
             count += 1
-        endIf
-        i += 1
-    endWhile
-    return count
-endFunction
-
-actor function FindAvailableActor(actor center, Float distance)
-    actor resultActor
-    Bool search = true
-    Int tryIndex = 0
-    while tryIndex < 10 && search
-        resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
-        search = resultActor == game.GetPlayer() || resultActor == center || !IsAvailableForDialogue(resultActor) || !IsHuman(resultActor)
-        tryIndex += 1
-    endWhile
-    if search
-        return none
-    else
-        return resultActor
-    endIf
-endFunction
-
-actor function FindTargetActorForDialogue(actor source, Float distance)
-    actor resultActor
-    Bool search = true
-    Int tryIndex = 0
-    while tryIndex < 10 && search
-        resultActor = self.FindAvailableActor(source, distance)
-        search = resultActor == None
-        tryIndex += 1
-    endWhile
-    if search
-        return none
-    else
-        return resultActor
-    endIf
-endFunction
-
-bool function IsAvailableForDialogue(Actor _actor)
-    return _actor != None && !CheckInArray(sources, (_actor.getactorbase() as form).getformid()) && !CheckInArray(targets, (_actor.getactorbase() as form).getformid()) && _actor.GetCurrentScene() == None  && !_actor.IsAlarmed() && !_actor.IsAlerted() && !_actor.IsArrested() && !_actor.IsDead() && !_actor.IsGhost() && !_actor.IsInCombat() && !_actor.IsInKillMove() && !_actor.IsIntimidated() && !_actor.IsSneaking() && !_actor.IsSprinting() && !_actor.IsTrespassing() && !_actor.IsUnconscious() && !_actor.IsHostileToActor(Game.GetPlayer())
-endFunction
-
-bool function IsHuman(Actor _actor)
-    Faction[] factions = _actor.GetFactions(-128, 127)
-    Int i = 0
-    While i < factions.Length
-        If factions[i].GetName() == "Creature Faction" || factions[i].GetName() == "Prey Faction"
-            Return False
         EndIf
         i += 1
     EndWhile
-    Return True
-endFunction
+    Return count
+EndFunction
 
-function ClearSourceTargetArrays()
+Actor Function FindAvailableActor(actor center, Float distance)
+    Actor resultActor
+    Bool search = true
+    Int tryIndex = 0
+    While tryIndex < 20 && search
+        resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
+        search = resultActor == game.GetPlayer() || resultActor == center || !IsAvailableForDialogue(resultActor) || (!IsHuman(resultActor) && !IsVampire(resultActor) && !IsDragon(resultActor))
+        tryIndex += 1
+    EndWhile
+    If search
+        Return none
+    Else
+        Return resultActor
+    EndIf
+EndFunction
+
+Actor Function FindTargetActorForDialogue(actor source, Float distance)
+    Actor resultActor
+    Bool search = true
+    Int tryIndex = 0
+    While tryIndex < 20 && search
+        resultActor = self.FindAvailableActor(source, distance)
+        search = resultActor == None
+        tryIndex += 1
+    EndWhile
+    If search
+        Return none
+    Else
+        Return resultActor
+    EndIf
+EndFunction
+
+Bool Function IsAvailableForDialogue(Actor _actor)
+    Return _actor != None && !CheckInArray(sources, (_actor.getactorbase() as form).getformid()) && !CheckInArray(targets, (_actor.getactorbase() as form).getformid()) && _actor.GetCurrentScene() == None  && _actor.GetSleepState() < 3 && !_actor.IsAlarmed() && !_actor.IsAlerted() && !_actor.IsArrested() && !_actor.IsDead() && !_actor.IsGhost() && !_actor.IsInCombat() && !_actor.IsInKillMove() && !_actor.IsIntimidated() && !_actor.IsSneaking() && !_actor.IsSprinting() && !_actor.IsTrespassing() && !_actor.IsUnconscious() && !_actor.IsHostileToActor(Game.GetPlayer())
+EndFunction
+
+Bool Function IsHuman(Actor _actor)
+    Return CheckInStringArray(HUMAN_RACES, _actor.GetRace().GetName())
+EndFunction
+
+Bool Function IsVampire(Actor _actor)
+    Return CheckInStringArray(Vampire_RACES, _actor.GetRace().GetName())
+EndFunction
+
+Bool Function IsDragon(Actor _actor)
+    Return _actor.GetRace().GetName() == "DragonRace"
+EndFunction
+
+Function ClearSourceTargetArrays()
     Int currentTime = GetCurrentTime()
     Int i = 0
-    while i < MAX_DIALOGUE_COUNT
-        if(initTimes[i] != -1 && currentTime - initTimes[i] > MAX_DIALOGUE_TIMEOUT)
+    String endConversation
+    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+        endConversation = MiscUtil.ReadFromFile("mantella\\_mantella_end_conversation" + i + ".txt")
+
+        If((initTimes[i] != -1 && currentTime - initTimes[i] > mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT()) || endConversation == "True")
             DebugTrace("Ending Dialogue " + i)
             sources[i] = 0
             targets[i] = 0
@@ -226,10 +288,16 @@ function ClearSourceTargetArrays()
             MiscUtil.WriteToFile("mantella\\_mantella_target_actor_voice_" + i + ".txt", "", append=false)
             MiscUtil.WriteToFile("mantella\\_mantella_actor_relationship" + i + ".txt", "", append=false)
             MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + i + ".txt", "True", append=false)
-        endIf
+
+            ; Debug.Trace("Removing package override from " + targetActors[i].GetDisplayName())
+            ; ActorUtil.RemovePackageOverride(targetActors[i],MantellaListenAndFollow1)
+            ; Debug.Trace("Removed package override from " + targetActors[i].GetDisplayName())
+            sourceActors[i] = None
+            targetActors[i] = None
+        EndIf
         i += 1
-    endWhile
-endFunction
+    EndWhile
+EndFunction
 
 Int Function GetCurrentTime()
     Float currentGameTime = Utility.GetCurrentGameTime()
@@ -237,29 +305,40 @@ Int Function GetCurrentTime()
     Return ((currentGameTime * 10000) as Int)
 EndFunction
 
-function InitArray(Int[] arr, Int val)
+Function InitArray(Int[] arr, Int val)
     Int i = 0
     While i < arr.Length
         arr[i] = val
         i += 1
     EndWhile
-endFunction
+EndFunction
 
-Bool function CheckInArray(Int[] array, Int value)
+Bool Function CheckInArray(Int[] array, Int value)
     Int i = 0
-    while i < array.length
-        if value == array[i]
-            return true
-        endIf
+    While i < array.length
+        If value == array[i]
+            Return true
+        EndIf
         i += 1
-    endWhile
-    return false
-endFunction
+    EndWhile
+    Return false
+EndFunction
 
-function DebugTrace(String text)
-    debug.Trace("MantellaNpc: " + text, 0)
-endFunction
+Bool Function CheckInStringArray(String[] array, String value)
+    Int i = 0
+    While i < array.length
+        If value == array[i]
+            Return true
+        EndIf
+        i += 1
+    EndWhile
+    Return false
+EndFunction
 
-function DebugMessageBox(String text)
-    debug.MessageBox("MantellaNpc: " + text)
-endFunction
+Function DebugTrace(String text)
+    Debug.Trace("Mantella: " + text, 0)
+EndFunction
+
+Function DebugMessageBox(String text)
+    Debug.MessageBox("Mantella: " + text)
+EndFunction

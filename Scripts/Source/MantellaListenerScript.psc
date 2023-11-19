@@ -2,6 +2,10 @@ Scriptname MantellaListenerScript extends ReferenceAlias
 
 Spell property MantellaSpell auto
 int conversationHotkey
+bool keyPressed = False
+
+; Package Property MantellaListenAndFollow1 auto
+; Package Property MantellaTestPackage auto
 
 event OnInit()
     Game.GetPlayer().AddSpell(MantellaSpell)
@@ -13,12 +17,16 @@ Event OnPlayerLoadGame()
 	;this will load the selected hotkey for the conversation press.
 	conversationHotkey = MiscUtil.ReadFromFile("mantella/_mantella_conversation_hotkey.txt") as int
 	RegisterForKey(conversationHotkey)
+    RegisterForKey(36)
+    RegisterForkey(37)
 EndEvent
 
 
 Event OnKeyDown(int KeyCode)
+    ;added !keyPressed because of entering this function multiple lines on one keystroke
 	;this ensures the right key is pressed and only activated while not in menu mode
-    If KeyCode == conversationHotkey && !utility.IsInMenuMode()  
+    If KeyCode == conversationHotkey && !utility.IsInMenuMode() && !keyPressed
+        keyPressed = True
 		String conversationEndedCheck = "false"
 		String currentActor = MiscUtil.ReadFromFile("mantella/_mantella_current_actor.txt") as String
 		if	currentActor == ""
@@ -31,17 +39,39 @@ Event OnKeyDown(int KeyCode)
 			String playerResponse = "False"
 			playerResponse = MiscUtil.ReadFromFile("mantella/_mantella_text_input_enabled.txt") as String
 			if playerResponse == "True"
-				;Debug.Notification("Forcing Conversation Through Hotkey")
+				Debug.Notification("Forcing Conversation Through Hotkey")
 				UIExtensions.InitMenu("UITextEntryMenu")
 				UIExtensions.OpenMenu("UITextEntryMenu")
 				string result = UIExtensions.GetMenuResultString("UITextEntryMenu")
 				if result != ""
 					MiscUtil.WriteToFile("mantella/_mantella_text_input_enabled.txt", "False", append=False)
 					MiscUtil.WriteToFile("mantella/_mantella_text_input.txt", result, append=false)
+                    Utility.Wait(0.5) ; 
 				endIf
 			endIf
-		endIf
+        endif
+        Utility.Wait(0.5)
+        keyPressed = False
     EndIf
+    ; if KeyCode == 36 && !utility.IsInMenuMode()
+    ;     Debug.Trace("Mantella: Adding package.")
+    ;     Actor targetRef = (Game.GetCurrentCrosshairRef() as actor)
+    ;     if targetRef
+    ;         Debug.Trace("Adding package to " + targetRef.GetDisplayName())
+    ;         ActorUtil.AddPackageOverride(targetRef, MantellaTestPackage)
+    ;         Utility.Wait(0.5)
+    ;         Debug.Trace("Mantella: Package added.")
+    ;     endIf
+    ; elseif KeyCode == 37 && !utility.IsInMenuMode()
+    ;     Debug.Trace("Mantella: Removing package.")
+    ;     Actor targetRef = (Game.GetCurrentCrosshairRef() as actor)
+    ;     if targetRef
+    ;         Debug.Trace("Mantella: Removing package from " + targetRef.GetDisplayName())
+    ;         ActorUtil.RemovePackageOverride(targetRef, MantellaTestPackage)
+    ;         Utility.Wait(0.5)
+    ;         Debug.Trace("Mantella: Package removed.")
+    ;     endIf
+    ; endIf
 endEvent
 
 

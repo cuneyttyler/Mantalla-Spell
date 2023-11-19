@@ -124,3 +124,15 @@ EndEvent
 Event OnDying(Actor akKiller)
     MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
 EndEvent
+
+Event OnPackageStart(Package _package)
+	Debug.Trace("Package started:" + _package.GetName())
+EndEvent
+
+Event OnPackageChange(Package akOldPackage)
+    Debug.Trace("Package changed from " + akOldPackage + " to another.")
+EndEvent
+
+Event OnPackageEnd(Package _package)
+	Debug.Trace("Package ended:" + _package.GetName())
+EndEvent
