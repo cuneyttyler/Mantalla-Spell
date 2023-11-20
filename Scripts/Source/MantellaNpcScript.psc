@@ -270,7 +270,6 @@ Function ClearSourceTargetArrays()
     While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
         endConversation = MiscUtil.ReadFromFile("mantella\\_mantella_end_conversation_" + i + ".txt")
 
-        DebugTrace(initTimes[i] + ", " + currentTime + ", " + mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT())
         If initTimes[i] != -1 && ((currentTime - initTimes[i] > mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT()) || endConversation == "True")
             DebugTrace("Ending Dialogue " + i)
             sources[i] = 0
