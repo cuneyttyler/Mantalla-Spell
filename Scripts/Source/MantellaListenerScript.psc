@@ -1,6 +1,7 @@
 Scriptname MantellaListenerScript extends ReferenceAlias
 
 Spell property MantellaSpell auto
+MantellaMCM Property mcm auto
 int conversationHotkey
 bool keyPressed = False
 
@@ -14,11 +15,19 @@ endEvent
 
 
 Event OnPlayerLoadGame()
+    ;this will reset all data when player loads game so npc-to-npc conversations in .exe gets terminated.
+    ResetAllData()
 	;this will load the selected hotkey for the conversation press.
 	conversationHotkey = MiscUtil.ReadFromFile("mantella/_mantella_conversation_hotkey.txt") as int
 	RegisterForKey(conversationHotkey)
     RegisterForKey(36)
     RegisterForkey(37)
+EndEvent
+
+
+Event OnPlayerFastTravelEnd (float afTravelGameTimeHours)
+    ;this will reset all data when player travels so npc-to-npc conversations in .exe gets terminated.
+    ResetAllData()
 EndEvent
 
 
@@ -39,7 +48,7 @@ Event OnKeyDown(int KeyCode)
 			String playerResponse = "False"
 			playerResponse = MiscUtil.ReadFromFile("mantella/_mantella_text_input_enabled.txt") as String
 			if playerResponse == "True"
-				Debug.Notification("Forcing Conversation Through Hotkey")
+				; Debug.Notification("Forcing Conversation Through Hotkey")
 				UIExtensions.InitMenu("UITextEntryMenu")
 				UIExtensions.OpenMenu("UITextEntryMenu")
 				string result = UIExtensions.GetMenuResultString("UITextEntryMenu")
@@ -182,3 +191,26 @@ EndEvent
 Event OnDying(Actor akKiller)
     MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
 EndEvent
+
+Function ResetAllData()
+    Int i = 0
+    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+        ResetData(i)
+        i += 1
+    EndWhile
+EndFunction
+
+Function ResetData(Int i) 
+    miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_source_actor_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_target_actor_" + i + ".txt", "", false, false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_sex_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_sex_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_race_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_race_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_voice_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_voice_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_actor_relationship" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + i + ".txt", "True", append=false)
+EndFunction

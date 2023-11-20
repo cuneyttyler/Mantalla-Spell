@@ -42,6 +42,31 @@ ReferenceAlias property TargetRef9 auto
 ReferenceAlias property SourceRef10 auto
 ReferenceAlias property TargetRef10 auto
 
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_1 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_2 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_3 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_4 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_5 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_6 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_7 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_8 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_9 auto
+GlobalVariable property MANTELLA_SOURCE_SAY_LINE_10 auto
+
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_1 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_2 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_3 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_4 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_5 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_6 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_7 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_8 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_9 auto
+GlobalVariable property MANTELLA_TARGET_SAY_LINE_10 auto
+
+GlobalVariable MANTELLA_SOURCE_SAY_LINE
+GlobalVariable MANTELLA_TARGET_SAY_LINE
+
 ; Package Property MantellaListenAndFollow1 auto
 ; Package Property MantellaListenAndFollow2 auto
 ; Package Property MantellaListenAndFollow3 auto
@@ -64,7 +89,6 @@ ReferenceAlias TargetRef
 Int MAX_DIALOGUE_COUNT = 10
 
 event OnEffectStart(Actor target, Actor caster)
-    DebugTrace("Initialized for " + caster.GetDisplayName() + " and " + target.GetDisplayName())
     MiscUtil.WriteToFile("_mantella__skyrim_folder.txt", "Set the folder this file is in as your skyrim_folder path in MantellaSoftware/config.ini", append=false)
     
     Utility.Wait(0.5)
@@ -116,8 +140,13 @@ event OnEffectStart(Actor target, Actor caster)
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String
             
+            ; This set of global variables is because of the subtype of topic causes characters to say these lines on related events.
+            MANTELLA_SOURCE_SAY_LINE.SetValueInt(1)
+            Utility.Wait(0.25)
             MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(caster, MantellaNpcSourceDialogueLine, subtitle)
             caster.Say(MantellaNpcSourceDialogueLine, abSpeakInPlayersHead=false)
+            Utility.Wait(0.25)
+            MANTELLA_SOURCE_SAY_LINE.SetValueInt(0)
 
             ; Set sayLine back to False once the voiceline has been triggered
             MiscUtil.WriteToFile("mantella\\" + "_mantella_say_line_source_" + dialogueIndex + ".txt", "False",  append=false)
@@ -130,8 +159,13 @@ event OnEffectStart(Actor target, Actor caster)
 
             subtitle = MiscUtil.ReadFromFile("mantella\\" + "_mantella_subtitle_" + dialogueIndex + ".txt") as String
             
+            ; This set of global variables is because of the subtype of topic causes characters to say these lines on related events.
+            MANTELLA_TARGET_SAY_LINE.SetValueInt(1)
+            Utility.Wait(0.25)
             MantellaSubtitles.SetInjectTopicAndSubtitleForSpeaker(target, MantellaNpcTargetDialogueLine, subtitle)
             target.Say(MantellaNpcTargetDialogueLine, abSpeakInPlayersHead=false)
+            Utility.Wait(0.25)
+            MANTELLA_TARGET_SAY_LINE.SetValueInt(0)
 
             ; Set sayLine back to False once the voiceline has been triggered
             MiscUtil.WriteToFile("mantella\\" + "_mantella_say_line_target_" + dialogueIndex + ".txt", "False",  append=false)
@@ -155,8 +189,20 @@ event OnEffectStart(Actor target, Actor caster)
         sayFinalLine = MiscUtil.ReadFromFile("mantella\\" + "_mantella_end_conversation_" + dialogueIndex + ".txt") as String
     endWhile
 
+    
     ; RemoveFollowPackage(target)
+    Reset(dialogueIndex)
 endEvent
+
+function Reset(Int dialogueIndex)
+    MiscUtil.WriteToFile("mantella/_mantella_end_conversation_" + dialogueIndex + ".txt", "True",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_source_actor_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_source_actor_id_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_target_actor_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_target_actor_id_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_say_line_source_" + dialogueIndex + ".txt", "False",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_say_line_target_" + dialogueIndex + ".txt", "False",  append=false)
+endFunction
 
 Function AddFollowPackage(Actor source)
     ; ActorUtil.AddPackageOverride(source, MantellaListenAndFollow1)
@@ -170,6 +216,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 0
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine1
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine1
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_1
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_1
         SourceRef = SourceRef1
         TargetRef = TargetRef1
         ; MantellaListenAndFollow = MantellaListenAndFollow1
@@ -177,6 +225,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 1
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine2
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine2
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_2
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_2
         SourceRef = SourceRef2
         TargetRef = TargetRef2
         ; MantellaListenAndFollow = MantellaListenAndFollow2
@@ -184,6 +234,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 2
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine3
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine3
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_3
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_3
         SourceRef = SourceRef3
         TargetRef = TargetRef3
         ; MantellaListenAndFollow = MantellaListenAndFollow3
@@ -191,6 +243,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 3
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine4
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine4
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_4
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_4
         SourceRef = SourceRef4
         TargetRef = TargetRef4
         ; MantellaListenAndFollow = MantellaListenAndFollow4
@@ -198,6 +252,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 4
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine5
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine5
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_5
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_5
         SourceRef = SourceRef5
         TargetRef = TargetRef5
         ; MantellaListenAndFollow = MantellaListenAndFollow5
@@ -205,6 +261,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 5
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine6
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine6
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_6
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_6
         SourceRef = SourceRef6
         TargetRef = TargetRef6
         ; MantellaListenAndFollow = MantellaListenAndFollow6
@@ -212,6 +270,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 6
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine7
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine7
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_7
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_7
         SourceRef = SourceRef7
         TargetRef = TargetRef7
         ; MantellaListenAndFollow = MantellaListenAndFollow7
@@ -219,6 +279,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 7
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine8
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine8
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_8
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_8
         SourceRef = SourceRef8
         TargetRef = TargetRef8
         ; MantellaListenAndFollow = MantellaListenAndFollow8
@@ -226,6 +288,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 8
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine9
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine9
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_9
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_9
         SourceRef = SourceRef9
         TargetRef = TargetRef9
         ; MantellaListenAndFollow = MantellaListenAndFollow9
@@ -233,6 +297,8 @@ Function Init(Int dialogueIndex)
     If dialogueIndex == 9
         MantellaNpcSourceDialogueLine = MantellaNpcSourceDialogueLine10
         MantellaNpcTargetDialogueLine = MantellaNpcTargetDialogueLine10
+        MANTELLA_SOURCE_SAY_LINE = MANTELLA_SOURCE_SAY_LINE_10
+        MANTELLA_TARGET_SAY_LINE = MANTELLA_TARGET_SAY_LINE_10
         SourceRef = SourceRef10
         TargetRef = TargetRef10
         ; MantellaListenAndFollow = MantellaListenAndFollow10

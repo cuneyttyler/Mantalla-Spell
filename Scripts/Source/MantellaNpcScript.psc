@@ -19,6 +19,8 @@ Float MaxDialogueDistance
 String[] HUMAN_RACES
 String[] VAMPIRE_RACES
 
+Cell currentCell
+
 ; Package Property MantellaListenAndFollow1 auto
 
 Float Function Meter(Float Meter)
@@ -43,7 +45,7 @@ Event OnInit()
         If True
             Int npcCount = FindNpcCountInTheArea(Meter(mcm.GET_MANTELLA_MAX_RADIUS()))
             
-            While i < npcCount && activeDialogCount < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+            While i < npcCount && activeDialogCount < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT() && !self.CheckCellChange()
                 DebugTrace("Check. ActiveDialogueCount = " + activeDialogCount + ", NPC Count: " + npcCount)
 
                 ; DebugTrace("==== MCM VALUES ====")
@@ -151,50 +153,49 @@ Function Init()
     InitArray(initTimes, -1)
     
     Int i = 0
-    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
-        
-        miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
-        miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
-        miscutil.WriteToFile("mantella\\_mantella_source_actor_" + i + ".txt", "", false, false)
-        miscutil.WriteToFile("mantella\\_mantella_target_actor_" + i + ".txt", "", false, false)
-        MiscUtil.WriteToFile("mantella\\_mantella_source_actor_sex_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_target_actor_sex_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_source_actor_race_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_target_actor_race_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_source_actor_voice_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_target_actor_voice_" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_actor_relationship" + i + ".txt", "", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + i + ".txt", "True", append=false)
-        MiscUtil.WriteToFile("mantella\\_mantella_current_location.txt", "", append=false)
-
+    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()  
+        ResetData(i)
         i += 1
     EndWhile
 
-    HUMAN_RACES[0] = "ArgonianRace"
-    HUMAN_RACES[1] = "BretonRace"
-    HUMAN_RACES[2] = "DarkElfRace"
-    HUMAN_RACES[3] = "HighElfRace"
-    HUMAN_RACES[4] = "ImpreialRace"
-    HUMAN_RACES[5] = "KhajitRace"
-    HUMAN_RACES[6] = "NordRace"
-    HUMAN_RACES[7] = "OrcRace"
-    HUMAN_RACES[8] = "RedguardRace"
-    HUMAN_RACES[9] = "WoodElfRace"
+    HUMAN_RACES[0] = "Argonian"
+    HUMAN_RACES[1] = "Breton"
+    HUMAN_RACES[2] = "Dark Elf"
+    HUMAN_RACES[3] = "High Elf"
+    HUMAN_RACES[4] = "IMPERIAL"
+    HUMAN_RACES[5] = "Khajit"
+    HUMAN_RACES[6] = "Nord"
+    HUMAN_RACES[7] = "Orc"
+    HUMAN_RACES[8] = "Redguard"
+    HUMAN_RACES[9] = "Wood Elf"
 
-    VAMPIRE_RACES[0] = "ArgonianRaceVampire"
-    VAMPIRE_RACES[1] = "BretonRaceVampire"
-    VAMPIRE_RACES[2] = "DarkElfRaceVampire"
-    VAMPIRE_RACES[3] = "HighElfRaceVampire"
-    VAMPIRE_RACES[4] = "ImpreialRaceVampire"
-    VAMPIRE_RACES[5] = "KhajitRaceVampire"
-    VAMPIRE_RACES[6] = "NordRaceVampire"
-    VAMPIRE_RACES[7] = "OrcRaceVampire"
-    VAMPIRE_RACES[8] = "RedguardRaceVampire"
-    VAMPIRE_RACES[9] = "WoodElfRaceVampire"
+    VAMPIRE_RACES[0] = "Argonian Vampire"
+    VAMPIRE_RACES[1] = "Breton Vampire"
+    VAMPIRE_RACES[2] = "Dark Elf Vampire"
+    VAMPIRE_RACES[3] = "High ElfV ampire"
+    VAMPIRE_RACES[4] = "IMPERIAL Vampire"
+    VAMPIRE_RACES[5] = "Khajit Vampire"
+    VAMPIRE_RACES[6] = "Nord Vampire"
+    VAMPIRE_RACES[7] = "Orc Vampire"
+    VAMPIRE_RACES[8] = "Redguard Vampire"
+    VAMPIRE_RACES[9] = "Wood Elf Vampire"
+
+    currentCell = Game.GetPlayer().GetParentCell()
 EndFunction
 
 Int Function ThrowDice()
     Return Utility.RandomInt(1,6)
+EndFunction
+
+Bool Function CheckCellChange()
+    Cell playerCell = Game.GetPlayer().GetParentCell()
+    If playerCell != currentCell
+        currentCell = playerCell
+        ResetAllData()
+        Return True
+    Else
+        Return False
+    EndIf
 EndFunction
 
 Int Function FindNpcCountInTheArea(Float distance)
@@ -205,7 +206,7 @@ Int Function FindNpcCountInTheArea(Float distance)
     While i < 50
         Actor resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
         Int id = (resultActor.getactorbase() as form).getformid()
-        If resultActor != center && (IsHuman(resultActor) || IsVampire(resultActor) || IsDragon(resultActor)) && !CheckInArray(ids, id)
+        If resultActor != center && (IsHuman(resultActor) || IsVampire(resultActor)) && !CheckInArray(ids, id)
             ids[count] = id
             count += 1
         EndIf
@@ -220,7 +221,7 @@ Actor Function FindAvailableActor(actor center, Float distance)
     Int tryIndex = 0
     While tryIndex < 20 && search
         resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
-        search = resultActor == game.GetPlayer() || resultActor == center || !IsAvailableForDialogue(resultActor) || (!IsHuman(resultActor) && !IsVampire(resultActor) && !IsDragon(resultActor))
+        search = resultActor == game.GetPlayer() || resultActor == center || !IsAvailableForDialogue(resultActor) || (!IsHuman(resultActor) && !IsVampire(resultActor))
         tryIndex += 1
     EndWhile
     If search
@@ -259,7 +260,7 @@ Bool Function IsVampire(Actor _actor)
 EndFunction
 
 Bool Function IsDragon(Actor _actor)
-    Return _actor.GetRace().GetName() == "DragonRace"
+    Return _actor.GetRace().GetName() == "Dragon"
 EndFunction
 
 Function ClearSourceTargetArrays()
@@ -267,27 +268,17 @@ Function ClearSourceTargetArrays()
     Int i = 0
     String endConversation
     While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
-        endConversation = MiscUtil.ReadFromFile("mantella\\_mantella_end_conversation" + i + ".txt")
+        endConversation = MiscUtil.ReadFromFile("mantella\\_mantella_end_conversation_" + i + ".txt")
 
-        If((initTimes[i] != -1 && currentTime - initTimes[i] > mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT()) || endConversation == "True")
+        DebugTrace(initTimes[i] + ", " + currentTime + ", " + mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT())
+        If initTimes[i] != -1 && ((currentTime - initTimes[i] > mcm.GET_MANTELLA_MAX_DIALOGUE_TIMEOUT()) || endConversation == "True")
             DebugTrace("Ending Dialogue " + i)
             sources[i] = 0
             targets[i] = 0
             initTimes[i] = -1
             activeDialogCount -= 1
             
-            miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
-            miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
-            miscutil.WriteToFile("mantella\\_mantella_source_actor_" + i + ".txt", "", false, false)
-            miscutil.WriteToFile("mantella\\_mantella_target_actor_" + i + ".txt", "", false, false)
-            MiscUtil.WriteToFile("mantella\\_mantella_source_actor_sex_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_target_actor_sex_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_source_actor_race_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_target_actor_race_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_source_actor_voice_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_target_actor_voice_" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_actor_relationship" + i + ".txt", "", append=false)
-            MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + i + ".txt", "True", append=false)
+            ResetData(i)
 
             ; Debug.Trace("Removing package override from " + targetActors[i].GetDisplayName())
             ; ActorUtil.RemovePackageOverride(targetActors[i],MantellaListenAndFollow1)
@@ -303,6 +294,29 @@ Int Function GetCurrentTime()
     Float currentGameTime = Utility.GetCurrentGameTime()
 
     Return ((currentGameTime * 10000) as Int)
+EndFunction
+
+Function ResetAllData()
+    Int i = 0
+    While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+        ResetData(i)
+        i += 1
+    EndWhile
+EndFunction
+
+Function ResetData(Int i) 
+    miscutil.WriteToFile("mantella\\_mantella_source_actor_id_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_target_actor_id_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_source_actor_" + i + ".txt", "", false, false)
+    miscutil.WriteToFile("mantella\\_mantella_target_actor_" + i + ".txt", "", false, false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_sex_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_sex_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_race_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_race_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_source_actor_voice_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_target_actor_voice_" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_actor_relationship" + i + ".txt", "", append=false)
+    MiscUtil.WriteToFile("mantella\\_mantella_end_conversation_" + i + ".txt", "True", append=false)
 EndFunction
 
 Function InitArray(Int[] arr, Int val)
@@ -327,6 +341,7 @@ EndFunction
 Bool Function CheckInStringArray(String[] array, String value)
     Int i = 0
     While i < array.length
+        ; DebugTrace(array[i] + ", " + value)
         If value == array[i]
             Return true
         EndIf

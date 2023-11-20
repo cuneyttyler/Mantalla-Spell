@@ -8,9 +8,9 @@ Int NPC_RadiusOptionId
 Int NPC_DialogueDistanceOptionId
 
 GlobalVariable Property MANTELLA_MAX_DIALOGUE_COUNT auto
-GlobalVariable Property  MANTELLA_MAX_DIALOGUE_TIMEOUT auto
-GlobalVariable Property  MANTELLA_MAX_RADIUS auto
-GlobalVariable Property  MANTELLA_MAX_DISTANCE auto
+GlobalVariable Property MANTELLA_MAX_DIALOGUE_TIMEOUT auto
+GlobalVariable Property MANTELLA_MAX_RADIUS auto
+GlobalVariable Property MANTELLA_MAX_DISTANCE auto
 
 GlobalVariable Property  MANTELLA_SELECTED_FREQUENCY auto
 
