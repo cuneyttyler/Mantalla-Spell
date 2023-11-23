@@ -86,6 +86,7 @@ ReferenceAlias TargetRef
 
 ; Package MantellaListenAndFollow
 
+Float MeterUnits = 71.0210
 Int MAX_DIALOGUE_COUNT = 10
 
 event OnEffectStart(Actor target, Actor caster)
@@ -129,7 +130,7 @@ event OnEffectStart(Actor target, Actor caster)
     EndIf
     
     ; Start conversation
-    While endConversation == "False"
+    While endConversation == "False" && CheckDistance(caster,target)
         sayLineSource = MiscUtil.ReadFromFile("mantella\\" + "_mantella_say_line_source_" + dialogueIndex + ".txt") as String
         sayLineTarget = MiscUtil.ReadFromFile("mantella\\" + "_mantella_say_line_target_" + dialogueIndex + ".txt") as String
         
@@ -194,15 +195,9 @@ event OnEffectStart(Actor target, Actor caster)
     Reset(dialogueIndex)
 endEvent
 
-function Reset(Int dialogueIndex)
-    MiscUtil.WriteToFile("mantella/_mantella_end_conversation_" + dialogueIndex + ".txt", "True",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_source_actor_" + dialogueIndex + ".txt", "",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_source_actor_id_" + dialogueIndex + ".txt", "",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_target_actor_" + dialogueIndex + ".txt", "",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_target_actor_id_" + dialogueIndex + ".txt", "",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_say_line_source_" + dialogueIndex + ".txt", "False",  append=false)
-    MiscUtil.WriteToFile("mantella/_mantella_say_line_target_" + dialogueIndex + ".txt", "False",  append=false)
-endFunction
+Bool Function CheckDistance(Actor source, Actor target)
+    Return source.GetDistance(target) <= Meter(7)
+EndFunction
 
 Function AddFollowPackage(Actor source)
     ; ActorUtil.AddPackageOverride(source, MantellaListenAndFollow1)
@@ -316,6 +311,20 @@ Int Function FindIndex(Actor source)
     EndWhile
 
     Return -1
+EndFunction
+
+function Reset(Int dialogueIndex)
+    MiscUtil.WriteToFile("mantella/_mantella_end_conversation_" + dialogueIndex + ".txt", "True",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_source_actor_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_source_actor_id_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_target_actor_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_target_actor_id_" + dialogueIndex + ".txt", "",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_say_line_source_" + dialogueIndex + ".txt", "False",  append=false)
+    MiscUtil.WriteToFile("mantella/_mantella_say_line_target_" + dialogueIndex + ".txt", "False",  append=false)
+endFunction
+
+Float Function Meter(Float Meter)
+    Return Meter * MeterUnits
 EndFunction
 
 int function GetCurrentHourOfDay()
