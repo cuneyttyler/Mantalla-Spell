@@ -4,7 +4,10 @@ Topic property MantellaDialogueLine auto
 ReferenceAlias property TargetRefAlias auto
 Faction property DunPlayerAllyFactionProperty auto
 Faction property PotentialFollowerFactionProperty auto
+Package property MantellaFollowPlayerPackageProperty auto
+MantellaMCM Property mcm auto
 int localMenuTimer = 0
+Bool packageOverriden = False
 
 event OnEffectStart(Actor target, Actor caster)
 	; these three lines below is to ensure that no leftover Mantella effects are running
@@ -23,6 +26,7 @@ event OnEffectStart(Actor target, Actor caster)
 
 	if currentActor == ""
         TargetRefAlias.ForceRefTo(target)
+        AddFollowPackage(target)
 
         String actorId = (target.getactorbase() as form).getformid()
 		if caster.IsSneaking() == 1
@@ -160,17 +164,31 @@ event OnEffectStart(Actor target, Actor caster)
     else
         MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
     endIf
-    Reset()
-	Debug.Notification("Conversation ended.")
+    EndConversation(target)
 endEvent
 
-function Reset()
+function EndConversation(Actor target)
+    RemoveFollowPackage(target)
     MiscUtil.WriteToFile("mantella/_mantella_end_conversation.txt", "True",  append=false)
     MiscUtil.WriteToFile("mantella/_mantella_current_actor.txt", "",  append=false)
     MiscUtil.WriteToFile("mantella/_mantella_current_actor_id.txt", "",  append=false)
     MiscUtil.WriteToFile("mantella/_mantella_thinking.txt", "",  append=false)
     MiscUtil.WriteToFile("mantella/_mantella_listening.txt", "",  append=false)
+    Debug.Notification("Conversation ended.")
 endFunction
+
+Function AddFollowPackage(Actor target)
+    If mcm.GET_MANTELLA_FOLLOW_PLAYER()
+        ActorUtil.AddPackageOverride(target, MantellaFollowPlayerPackageProperty)
+        packageOverriden = True
+    EndIf
+EndFunction
+
+Function RemoveFollowPackage(Actor target)
+    If packageOverriden
+        ActorUtil.RemovePackageOverride(target, MantellaFollowPlayerPackageProperty)
+    EndIf
+EndFunction
 
 int function GetCurrentHourOfDay()
 	float Time = Utility.GetCurrentGameTime()

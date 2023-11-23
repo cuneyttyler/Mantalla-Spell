@@ -6,16 +6,20 @@ Int NPC_EngageFrequencyOptionId
 Int NPC_MaxDialogueTimeoutOptionId
 Int NPC_RadiusOptionId
 Int NPC_DialogueDistanceOptionId
+Int FollowPlayerOptionId
 
 GlobalVariable Property MANTELLA_MAX_DIALOGUE_COUNT auto
 GlobalVariable Property MANTELLA_MAX_DIALOGUE_TIMEOUT auto
 GlobalVariable Property MANTELLA_MAX_RADIUS auto
 GlobalVariable Property MANTELLA_MAX_DISTANCE auto
+GlobalVariable Property MANTELLA_FOLLOW_PLAYER auto
 
 GlobalVariable Property  MANTELLA_SELECTED_FREQUENCY auto
 
 String[] frequencyList
 Int currFrequency = 1
+
+Bool followPlayerState
 
 Event OnConfigInit()
     Debug.Trace("Mantella: MCM Config Initializing.")
@@ -37,6 +41,12 @@ Event OnConfigInit()
     currFrequency = 1
 
     MANTELLA_SELECTED_FREQUENCY.SetValueInt(1)
+
+    If MANTELLA_FOLLOW_PLAYER.GetValueInt() == 1
+        followPlayerState = True
+    Else
+        followPlayerState = False
+    EndIf
 EndEvent
 
 Event OnPageReset(String page)
@@ -51,7 +61,7 @@ Event OnPageReset(String page)
         NPC_MaxDialogueTimeoutOptionId = AddSliderOption("Max Dialogue Timeout", MANTELLA_MAX_DIALOGUE_TIMEOUT.GetValueInt())
         NPC_RadiusOptionId = AddSliderOption("Player NPC Scan Radius", MANTELLA_MAX_RADIUS.GetValue())
         NPC_DialogueDistanceOptionId = AddSliderOption("Max NPC Dialogue Distance", MANTELLA_MAX_DISTANCE.GetValue())
-
+        FollowPlayerOptionId = AddToggleOption("Follow Player", followPlayerState)
     EndIf
 EndEvent
 
@@ -73,6 +83,9 @@ Event OnOptionHighlight(Int optionId)
     EndIf
     If optionId == NPC_DialogueDistanceOptionId
         SetInfoText("The max distance between NPCs to initiate a dialogue. This value is multipled by 3 when there are less then 3 NPCs in the environment")
+    EndIf
+    If optionId == FollowPlayerOptionId
+        SetInfoText("NPCs follow player during conversation if checked.")
     EndIf
 EndEvent
 
@@ -144,6 +157,13 @@ Event OnOptionMenuAccept(int a_option, int a_index)
     EndIf
 EndEvent
 
+Event OnOptionSelect(int optionId)
+    If optionId == FollowPlayerOptionId
+        followPlayerState = !followPlayerState
+        SetToggleOptionValue(optionid, followPlayerState)
+    EndIf
+EndEvent
+
 Int Function GET_MANTELLA_MAX_DIALOGUE_COUNT()
     Return MANTELLA_MAX_DIALOGUE_COUNT.GetValueInt()
 EndFunction
@@ -162,4 +182,8 @@ EndFunction
 
 Int Function GET_MANTELLA_SELECTED_FREQUENCY()
     Return MANTELLA_SELECTED_FREQUENCY.GetValueInt()
+EndFunction
+
+Bool Function GET_MANTELLA_FOLLOW_PLAYER()
+    Return followPlayerState
 EndFunction
