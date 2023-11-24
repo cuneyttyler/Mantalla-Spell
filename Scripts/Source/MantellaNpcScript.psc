@@ -20,6 +20,7 @@ String[] HUMAN_RACES
 String[] VAMPIRE_RACES
 
 Cell currentCell
+Bool isScenePlaying
 
 ; Package Property MantellaListenAndFollow1 auto
 
@@ -42,9 +43,9 @@ Event OnInit()
     While true
         Int i = 0
         Int currentTime = GetCurrentTime()
-        If True
-            Int npcCount = FindNpcCountInTheArea(Meter(mcm.GET_MANTELLA_MAX_RADIUS()))
-            
+        Int npcCount = FindNpcCountInTheArea(Meter(mcm.GET_MANTELLA_MAX_RADIUS()))
+
+        If !isScenePlaying
             While i < npcCount && activeDialogCount < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT() && !self.CheckCellChange()
                 DebugTrace("Check. ActiveDialogueCount = " + activeDialogCount + ", NPC Count: " + npcCount)
 
@@ -142,6 +143,12 @@ Event OnInit()
                 EndIf
                 i += 1
             EndWhile
+        Else
+            ;If a scene playing in the cell, end all conversations.
+            While i < mcm.GET_MANTELLA_MAX_DIALOGUE_COUNT()
+                ResetData(i)
+                i += 1
+            EndWhile
         EndIf
         self.ClearSourceTargetArrays()
     EndWhile
@@ -203,15 +210,20 @@ Int Function FindNpcCountInTheArea(Float distance)
     Actor center = Game.GetPlayer()
     Int count = 0
     Int i = 0
+    Bool isScenePlayingNow = False
     While i < 50
         Actor resultActor = game.FindRandomActor(center.X, center.Y, center.Z, distance)
         Int id = (resultActor.getactorbase() as form).getformid()
         If resultActor != center && (IsHuman(resultActor) || IsVampire(resultActor)) && !CheckInArray(ids, id)
             ids[count] = id
             count += 1
+            If resultActor.GetCurrentScene() != None
+                isScenePlayingNow = True
+            EndIf
         EndIf
         i += 1
     EndWhile
+    isScenePlaying = isScenePlayingNow
     Return count
 EndFunction
 
